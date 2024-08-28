@@ -24,16 +24,14 @@ pipeline {
             }
             post {
                 always {
-                    retry(2) {
-                        script {
-                            def result = currentBuild.currentResult
-                            emailext(
-                                to: env.EMAIL_RECIPIENT,
-                                subject: "Unit and Integration Tests - ${result}",
-                                body: "The Unit and Integration Tests stage has ${result}. Please check the attached logs.",
-                                attachLog: true
-                            )
-                        }
+                    script {
+                        def result = currentBuild.currentResult
+                        emailext(
+                            to: env.EMAIL_RECIPIENT,
+                            subject: "Unit and Integration Tests - ${result}",
+                            body: "The Unit and Integration Tests stage has ${result}. Please check the attached logs.",
+                            attachLog: true
+                        )
                     }
                 }
             }
@@ -49,20 +47,18 @@ pipeline {
         stage('Security Scan') {
             steps {
                 echo 'Performing security scan using OWASP Dependency-Check...'
-                sh './dependency-check.sh --project my-project --scan .'
+                bat 'dependency-check.bat --project my-project --scan .'
             }
             post {
                 always {
-                    retry(2) {
-                        script {
-                            def result = currentBuild.currentResult
-                            emailext(
-                                to: env.EMAIL_RECIPIENT,
-                                subject: "Security Scan - ${result}",
-                                body: "The Security Scan stage has ${result}. Please check the attached logs.",
-                                attachLog: true
-                            )
-                        }
+                    script {
+                        def result = currentBuild.currentResult
+                        emailext(
+                            to: env.EMAIL_RECIPIENT,
+                            subject: "Security Scan - ${result}",
+                            body: "The Security Scan stage has ${result}. Please check the attached logs.",
+                            attachLog: true
+                        )
                     }
                 }
             }
@@ -71,8 +67,10 @@ pipeline {
         stage('Deploy to Staging') {
             steps {
                 echo 'Deploying to staging server...'
-                sh 'scp target/my-app.jar ec2-user@staging-server:/path/to/deploy'
-                sh 'ssh ec2-user@staging-server "java -jar /path/to/deploy/my-app.jar &"'
+                bat '''
+                pscp target\\my-app.jar ec2-user@staging-server:/path/to/deploy
+                plink ec2-user@staging-server "java -jar /path/to/deploy/my-app.jar &"
+                '''
             }
         }
         
@@ -86,31 +84,29 @@ pipeline {
         stage('Deploy to Production') {
             steps {
                 echo 'Deploying to production server...'
-                sh 'scp target/my-app.jar ec2-user@production-server:/path/to/deploy'
-                sh 'ssh ec2-user@production-server "java -jar /path/to/deploy/my-app.jar &"'
+                bat '''
+                pscp target\\my-app.jar ec2-user@production-server:/path/to/deploy
+                plink ec2-user@production-server "java -jar /path/to/deploy/my-app.jar &"
+                '''
             }
         }
     }
     
     post {
         success {
-            retry(2) {
-                emailext(
-                    to: env.EMAIL_RECIPIENT,
-                    subject: "Pipeline Successful",
-                    body: "The Jenkins pipeline has completed successfully."
-                )
-            }
+            emailext(
+                to: env.EMAIL_RECIPIENT,
+                subject: "Pipeline Successful",
+                body: "The Jenkins pipeline has completed successfully."
+            )
         }
         failure {
-            retry(2) {
-                emailext(
-                    to: env.EMAIL_RECIPIENT,
-                    subject: "Pipeline Failed",
-                    body: "The Jenkins pipeline has failed. Please check the attached logs.",
-                    attachLog: true
-                )
-            }
+            emailext(
+                to: env.EMAIL_RECIPIENT,
+                subject: "Pipeline Failed",
+                body: "The Jenkins pipeline has failed. Please check the attached logs.",
+                attachLog: true
+            )
         }
     }
 }
