@@ -29,7 +29,7 @@ pipeline {
                         emailext(
                             to: env.EMAIL_RECIPIENT,
                             subject: "Unit and Integration Tests - ${result}",
-                            body: "The Unit and Integration Tests stage has ${result}. Please check the attached logs.",
+                            body: 'Test Message',  // Updated body content
                             attachLog: true
                         )
                     }
@@ -56,7 +56,7 @@ pipeline {
                         emailext(
                             to: env.EMAIL_RECIPIENT,
                             subject: "Security Scan - ${result}",
-                            body: "The Security Scan stage has ${result}. Please check the attached logs.",
+                            body: 'Test Message',  // Updated body content
                             attachLog: true
                         )
                     }
@@ -93,14 +93,14 @@ pipeline {
             emailext(
                 to: env.EMAIL_RECIPIENT,
                 subject: "Pipeline Successful",
-                body: "The Jenkins pipeline has completed successfully."
+                body: 'Test Message'  // Updated body content
             )
         }
         failure {
             emailext(
                 to: env.EMAIL_RECIPIENT,
                 subject: "Pipeline Failed",
-                body: "The Jenkins pipeline has failed. Please check the attached logs.",
+                body: 'Test Message',  // Updated body content
                 attachLog: true
             )
         }
