@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        // Set up any environment variables you need here
         EMAIL_RECIPIENT = 'gurdarshan24k@gmail.com'
     }
 
@@ -11,7 +10,7 @@ pipeline {
             steps {
                 echo 'Building the project...'
                 // Use Maven to build the project
-                sh 'mvn clean package'
+                bat 'mvn clean package'
             }
         }
 
@@ -19,7 +18,7 @@ pipeline {
             steps {
                 echo 'Running unit and integration tests...'
                 // Run unit and integration tests using Maven
-                sh 'mvn test'
+                bat 'mvn test'
             }
             post {
                 always {
@@ -37,7 +36,7 @@ pipeline {
             steps {
                 echo 'Running code analysis...'
                 // Use SonarQube to analyze the code
-                sh 'sonar-scanner'
+                bat 'sonar-scanner'
             }
         }
 
@@ -45,7 +44,7 @@ pipeline {
             steps {
                 echo 'Performing security scan...'
                 // Perform a security scan with OWASP ZAP or Snyk
-                sh 'snyk test'
+                bat 'snyk test'
             }
             post {
                 always {
@@ -63,7 +62,7 @@ pipeline {
             steps {
                 echo 'Deploying to staging...'
                 // Deploy to staging server using AWS CLI or Ansible
-                sh 'ansible-playbook deploy-staging.yml'
+                bat 'ansible-playbook deploy-staging.yml'
             }
         }
 
@@ -71,7 +70,7 @@ pipeline {
             steps {
                 echo 'Running integration tests on staging...'
                 // Run integration tests on the staging environment
-                sh 'mvn verify'
+                bat 'mvn verify'
             }
             post {
                 always {
@@ -89,14 +88,13 @@ pipeline {
             steps {
                 echo 'Deploying to production...'
                 // Deploy to production server using AWS CLI or Ansible
-                sh 'ansible-playbook deploy-prod.yml'
+                bat 'ansible-playbook deploy-prod.yml'
             }
         }
     }
 
     post {
         always {
-            // Send an email after the pipeline completes
             emailext (
                 to: "${env.EMAIL_RECIPIENT}",
                 subject: "Pipeline Completion: ${currentBuild.fullDisplayName}",
