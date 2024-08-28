@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // Set up any environment variables you need here
-        EMAIL_RECIPIENT = 'developer@example.com'  // Replace with your email address
+        EMAIL_RECIPIENT = 'gurdarshan24k@gmail.com'
     }
 
     stages {
