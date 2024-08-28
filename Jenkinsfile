@@ -1,112 +1,87 @@
 pipeline {
     agent any
-    
-    environment {
-        EMAIL_RECIPIENT = 'gurdarshan24k@gmail.com'
+
+    tools {
+        // Define the tools required by your pipeline (e.g., JDK, Maven)
+        maven 'Maven 3.x'
+        jdk 'JDK 8'
     }
 
-    triggers {
-        pollSCM('* * * * *')
+    environment {
+        // Define any environment variables needed by your pipeline
+        MVN_HOME = tool 'Maven 3.x'
+        PATH = "${env.MVN_HOME}/bin:${env.PATH}"
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out the code from the repository...'
+                checkout scm
+                echo 'Code checkout completed.'
+            }
+        }
+
         stage('Build') {
             steps {
-                echo 'Building the code using Maven...'
-                sh 'mvn clean package'
+                echo 'Starting the build process...'
+                sh 'mvn clean install'
+                echo 'Build process completed.'
             }
         }
-        
-        stage('Unit and Integration Tests') {
+
+        stage('Unit Tests') {
             steps {
-                echo 'Running unit and integration tests using JUnit and Mockito...'
+                echo 'Running unit tests...'
                 sh 'mvn test'
-            }
-            post {
-                always {
-                    script {
-                        def result = currentBuild.currentResult
-                        emailext(
-                            to: env.EMAIL_RECIPIENT,
-                            subject: "Unit and Integration Tests - ${result}",
-                            body: "The Unit and Integration Tests stage has ${result}. Please check the attached logs.",
-                            attachLog: true
-                        )
-                    }
-                }
+                echo 'Unit tests completed.'
             }
         }
-        
+
         stage('Code Analysis') {
             steps {
-                echo 'Analyzing code using SonarQube...'
+                echo 'Starting code analysis using SonarQube...'
                 sh 'mvn sonar:sonar'
+                echo 'Code analysis completed.'
             }
         }
-        
-        stage('Security Scan') {
+
+        stage('Package') {
             steps {
-                echo 'Performing security scan using OWASP Dependency-Check...'
-                bat 'dependency-check.bat --project my-project --scan .'
-            }
-            post {
-                always {
-                    script {
-                        def result = currentBuild.currentResult
-                        emailext(
-                            to: env.EMAIL_RECIPIENT,
-                            subject: "Security Scan - ${result}",
-                            body: "The Security Scan stage has ${result}. Please check the attached logs.",
-                            attachLog: true
-                        )
-                    }
-                }
+                echo 'Packaging the application...'
+                sh 'mvn package'
+                echo 'Packaging completed.'
             }
         }
-        
-        stage('Deploy to Staging') {
+
+        stage('Deploy') {
             steps {
-                echo 'Deploying to staging server...'
-                bat '''
-                pscp target\\my-app.jar ec2-user@staging-server:/path/to/deploy
-                plink ec2-user@staging-server "java -jar /path/to/deploy/my-app.jar &"
-                '''
-            }
-        }
-        
-        stage('Integration Tests on Staging') {
-            steps {
-                echo 'Running integration tests on staging environment...'
-                sh 'mvn verify -Denv=staging'
-            }
-        }
-        
-        stage('Deploy to Production') {
-            steps {
-                echo 'Deploying to production server...'
-                bat '''
-                pscp target\\my-app.jar ec2-user@production-server:/path/to/deploy
-                plink ec2-user@production-server "java -jar /path/to/deploy/my-app.jar &"
-                '''
+                echo 'Deploying the application to the staging environment...'
+                sh 'mvn deploy'
+                echo 'Deployment completed.'
             }
         }
     }
-    
+
     post {
-        success {
-            emailext(
-                to: env.EMAIL_RECIPIENT,
-                subject: "Pipeline Successful",
-                body: "The Jenkins pipeline has completed successfully."
-            )
+        always {
+            echo 'Cleaning up the workspace...'
+            cleanWs()
+            echo 'Workspace cleanup completed.'
         }
+
+        success {
+            echo 'Build was successful!'
+        }
+
         failure {
-            emailext(
-                to: env.EMAIL_RECIPIENT,
-                subject: "Pipeline Failed",
-                body: "The Jenkins pipeline has failed. Please check the attached logs.",
-                attachLog: true
+            echo 'Build failed. Sending email notification...'
+            emailext (
+                to: 'you@example.com',
+                subject: "Build Failed: ${currentBuild.fullDisplayName}",
+                body: "Build failed. Please check the Jenkins console output."
             )
+            echo 'Email notification sent.'
         }
     }
 }
