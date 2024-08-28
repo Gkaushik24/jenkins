@@ -10,12 +10,6 @@ pipeline {
     }
 
     stages {
-        stage('Declarative: Checkout SCM') {
-            steps {
-                echo 'Checking out code from SCM...'
-            }
-        }
-        
         stage('Build') {
             steps {
                 echo 'Building the code using Maven...'
@@ -23,10 +17,23 @@ pipeline {
             }
         }
         
-        stage('Test') {
+        stage('Unit and Integration Tests') {
             steps {
                 echo 'Running unit and integration tests using JUnit and Mockito...'
                 echo 'Command: mvn test'
+            }
+            post {
+                always {
+                    script {
+                        def result = currentBuild.currentResult
+                        emailext(
+                            to: env.EMAIL_RECIPIENT,
+                            subject: "Unit and Integration Tests - ${result}",
+                            body: "The Unit and Integration Tests stage has ${result}. Please check the attached logs.",
+                            attachLog: true
+                        )
+                    }
+                }
             }
         }
         
@@ -41,6 +48,19 @@ pipeline {
             steps {
                 echo 'Performing security scan using OWASP Dependency-Check...'
                 echo 'Command: dependency-check.sh --project my-project --scan .'
+            }
+            post {
+                always {
+                    script {
+                        def result = currentBuild.currentResult
+                        emailext(
+                            to: env.EMAIL_RECIPIENT,
+                            subject: "Security Scan - ${result}",
+                            body: "The Security Scan stage has ${result}. Please check the attached logs.",
+                            attachLog: true
+                        )
+                    }
+                }
             }
         }
         
