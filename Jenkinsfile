@@ -1,77 +1,90 @@
+//heo....
 pipeline {
     agent any
     
     environment {
-        EMAIL_RECIPIENT = "gurdarshan24k@gmail.com"
+        EMAIL_RECIPIENT = 'gurdarshan24k@gmail.com'
     }
 
     triggers {
-        pollSCM('H/2* * * * *')
+        pollSCM('* * * * *')
     }
 
     stages {
         stage('Build') {
             steps {
-                script {
-                    echo 'Building the code using Maven...'
-                    sh 'mvn clean package'
-                }
+                echo 'Building the code using Maven...'
+                echo 'Command: mvn clean package'
             }
         }
         
         stage('Unit and Integration Tests') {
             steps {
-                script {
-                    echo 'Running unit and integration tests using JUnit and Mockito...'
-                    sh 'mvn test'
+                echo 'Running unit and integration tests using JUnit and Mockito...'
+                echo 'Command: mvn test'
+            }
+            post {
+                always {
+                    script {
+                        def result = currentBuild.currentResult
+                        emailext(
+                            to: env.EMAIL_RECIPIENT,
+                            subject: "Unit and Integration Tests - ${result}",
+                            body: "The Unit and Integration Tests stage has ${result}. Please check the attached logs.",
+                            attachLog: true
+                        )
+                    }
                 }
             }
         }
         
         stage('Code Analysis') {
             steps {
-                script {
-                    echo 'Analyzing code using SonarQube...'
-                    sh 'mvn sonar:sonar'
-                }
+                echo 'Analyzing code using SonarQube...'
+                echo 'Command: mvn sonar:sonar'
             }
         }
         
         stage('Security Scan') {
             steps {
-                script {
-                    echo 'Performing security scan using OWASP Dependency-Check...'
-                    sh 'dependency-check.sh --project my-project --scan .'
+                echo 'Performing security scan using OWASP Dependency-Check...'
+                echo 'Command: dependency-check.sh --project my-project --scan .'
+            }
+            post {
+                always {
+                    script {
+                        def result = currentBuild.currentResult
+                        emailext(
+                            to: env.EMAIL_RECIPIENT,
+                            subject: "Security Scan - ${result}",
+                            body: "The Security Scan stage has ${result}. Please check the attached logs.",
+                            attachLog: true
+                        )
+                    }
                 }
             }
         }
         
         stage('Deploy to Staging') {
             steps {
-                script {
-                    echo 'Deploying to staging server...'
-                    sh 'scp target/my-app.jar ec2-user@staging-server:/path/to/deploy'
-                    sh 'ssh ec2-user@staging-server "java -jar /path/to/deploy/my-app.jar &"'
-                }
+                echo 'Deploying to staging server...'
+                echo 'Command: scp target/my-app.jar ec2-user@staging-server:/path/to/deploy'
+                echo 'Command: ssh ec2-user@staging-server "java -jar /path/to/deploy/my-app.jar &"'
             }
         }
         
         stage('Integration Tests on Staging') {
             steps {
-                script {
-                    echo 'Running integration tests on staging environment...'
-                    sh 'mvn verify -Denv=staging'
-                }
+                echo 'Running integration tests on staging environment...'
+                echo 'Command: mvn verify -Denv=staging'
             }
         }
         
         stage('Deploy to Production') {
             steps {
-                script {
-                    echo 'Deploying to production server...'
-                    sh 'scp target/my-app.jar ec2-user@production-server:/path/to/deploy'
-                    sh 'ssh ec2-user@production-server "java -jar /path/to/deploy/my-app.jar &"'
-                }
+                echo 'Deploying to production server...'
+                echo 'Command: scp target/my-app.jar ec2-user@production-server:/path/to/deploy'
+                echo 'Command: ssh ec2-user@production-server "java -jar /path/to/deploy/my-app.jar &"'
             }
         }
     }
@@ -88,8 +101,9 @@ pipeline {
             emailext(
                 to: env.EMAIL_RECIPIENT,
                 subject: "Pipeline Failed",
-                body: "The Jenkins pipeline has failed. Please check the console output for details."
+                body: "The Jenkins pipeline has failed. Please check the attached logs.",
+                attachLog: true
             )
-        }
-    }
+        }
+    }
 }
