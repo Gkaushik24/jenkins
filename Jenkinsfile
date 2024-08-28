@@ -22,19 +22,6 @@ pipeline {
                 echo 'Running unit and integration tests using JUnit and Mockito...'
                 echo 'Command: mvn test'
             }
-            post {
-                always {
-                    script {
-                        def result = currentBuild.currentResult
-                        emailext(
-                            to: env.EMAIL_RECIPIENT,
-                            subject: "Unit and Integration Tests - ${result}",
-                            body: "The Unit and Integration Tests stage has ${result}. Please check the attached logs.",
-                            attachLog: true
-                        )
-                    }
-                }
-            }
         }
         
         stage('Code Analysis') {
@@ -48,19 +35,6 @@ pipeline {
             steps {
                 echo 'Performing security scan using OWASP Dependency-Check...'
                 echo 'Command: dependency-check.sh --project my-project --scan .'
-            }
-            post {
-                always {
-                    script {
-                        def result = currentBuild.currentResult
-                        emailext(
-                            to: env.EMAIL_RECIPIENT,
-                            subject: "Security Scan - ${result}",
-                            body: "The Security Scan stage has ${result}. Please check the attached logs.",
-                            attachLog: true
-                        )
-                    }
-                }
             }
         }
         
@@ -94,14 +68,6 @@ pipeline {
                 to: env.EMAIL_RECIPIENT,
                 subject: "Pipeline Successful",
                 body: "The Jenkins pipeline has completed successfully."
-            )
-        }
-        failure {
-            emailext(
-                to: env.EMAIL_RECIPIENT,
-                subject: "Pipeline Failed",
-                body: "The Jenkins pipeline has failed. Please check the attached logs.",
-                attachLog: true
             )
         }
     }
